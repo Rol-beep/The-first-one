@@ -57,6 +57,15 @@ export function sameOrigin(request: Request) {
 
 // Jeden wspólny budżet warsztatu, utrwalony poza pamięcią procesu.
 export async function reserveAttempt() {
+  // W tym trybie limit egzekwuje aktywna reguła Vercel Firewall.
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.VERCEL === '1' &&
+    process.env.CHAT_LOGIN_LIMIT_MODE === 'vercel-firewall'
+  ) {
+    return true;
+  }
+
   const directory = process.env.CHAT_RATE_LIMIT_DIR ||
     (process.env.NODE_ENV !== 'production'
       ? '/tmp/moj-chatbot-workshop-limit' : '');
