@@ -44,7 +44,10 @@ export async function POST(request: Request) {
         (message) =>
           !["user", "assistant"].includes(message.role) ||
           message.parts.some(
-            (part) => !["text", "step-start"].includes(part.type),
+            (part) => !(
+              ["text", "step-start"].includes(part.type) ||
+              (message.role === "assistant" && part.type === "reasoning")
+            ),
           ),
       )
     ) {
