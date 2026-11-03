@@ -25,13 +25,33 @@ export async function POST(request: Request) {
   }
 
   let messages;
+  let validationStage = "sdk";
+  let diagnosticShape: unknown = null;
+
 
   try {
     const body = await request.json();
+    const knownTypes = ["text", "step-start", "reasoning",
+      "source-url", "source-document", "file"];
+    diagnosticShape = Array.isArray(body.messages)
+      ? body.messages.map((m: {
+          role?: unknown;
+          parts?: { type?: unknown }[];
+        } | null) => ({
+          role: ["user", "assistant", "system"].includes(String(m?.role))
+            ? m?.role : "other",
+          parts: Array.isArray(m?.parts)
+            ? m.parts.map(p => knownTypes.includes(String(p?.type))
+                ? p?.type : "other")
+            : "missing",
+        }))
+      : "messages-not-array";
+
     messages = await validateUIMessages({
       messages: body.messages,
     });
 
+    validationStage = "app";
     const last = messages.at(-1);
 
     if (
@@ -54,6 +74,10 @@ export async function POST(request: Request) {
       throw new Error("Niepoprawna wiadomość");
     }
   } catch {
+    console.warn("CHAT_VALIDATION_FAILED", {
+      stage: validationStage,
+      shape: diagnosticShape,
+    });
     return new Response(
       "Wyślij niepustą wiadomość i poprawną historię rozmowy.",
       { status: 400 },
