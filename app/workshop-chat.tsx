@@ -3,8 +3,10 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
+import { displayChatError } from "@/lib/studio-nova-output";
+import AnalysisPanel from "./studio-nova-analysis";
 
-export default function Home() {
+function PlainChat() {
   const [input, setInput] = useState("");
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
@@ -44,7 +46,7 @@ export default function Home() {
 
       {error && (
         <p role="alert" className="mb-3 text-red-600">
-          {error.message || "Błąd połączenia. Spróbuj ponownie."}
+          {displayChatError(error.message || "Błąd połączenia. Spróbuj ponownie.")}
         </p>
       )}
 
@@ -77,4 +79,16 @@ export default function Home() {
       </form>
     </main>
   );
+}
+
+export default function Home() {
+  const [mode, setMode] = useState<'chat' | 'analysis'>('chat');
+  return <>
+    <div role="tablist" aria-label="Tryb pracy" className="mx-auto mt-4 flex max-w-2xl gap-3 px-6">
+      <button id="chat-tab" role="tab" aria-selected={mode === 'chat'} aria-controls="chat-panel" onClick={() => setMode('chat')} className="rounded border px-4 py-2 aria-selected:bg-blue-700 aria-selected:text-white">Zwykły czat</button>
+      <button id="analysis-tab" role="tab" aria-selected={mode === 'analysis'} aria-controls="analysis-panel" onClick={() => setMode('analysis')} className="rounded border px-4 py-2 aria-selected:bg-blue-700 aria-selected:text-white">Analiza wiadomości</button>
+    </div>
+    <div id="chat-panel" role="tabpanel" aria-labelledby="chat-tab" hidden={mode !== 'chat'}><PlainChat /></div>
+    <div id="analysis-panel" role="tabpanel" aria-labelledby="analysis-tab" hidden={mode !== 'analysis'}><AnalysisPanel /></div>
+  </>;
 }
