@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:json": "node tests/studio-nova-json.test.mjs",
+    "test:injection": "node scripts/prompt-injection-check.mjs",
+    "test:boundaries": "node scripts/studio-nova-boundary-check.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "4.0.163",
