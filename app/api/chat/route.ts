@@ -1,10 +1,9 @@
+import { createScopedChatResponse } from "@/lib/studio-nova-chat";
+import { isWithinStudioNovaScope, studioNovaScopeReply } from "@/lib/studio-nova-scope";
 import { authenticated, sameOrigin } from "@/lib/workshop";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {
   convertToModelMessages,
-  createUIMessageStreamResponse,
-  streamText,
-  toUIMessageStream,
   validateUIMessages,
 } from "ai";
 
@@ -84,6 +83,13 @@ export async function POST(request: Request) {
     );
   }
 
+  const lastText = messages.at(-1)!.parts.filter(part => part.type === "text").map(part => part.text).join("\n");
+  const previousUserTexts = messages.slice(0, -1).filter(message => message.role === "user")
+    .map(message => message.parts.filter(part => part.type === "text").map(part => part.text).join("\n"));
+  if (!isWithinStudioNovaScope(lastText, previousUserTexts)) {
+    return new Response(studioNovaScopeReply, { status: 422, headers: { "Cache-Control": "no-store" } });
+  }
+
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   const model = process.env.OPENROUTER_MODEL?.trim();
 
@@ -97,20 +103,11 @@ export async function POST(request: Request) {
   try {
     const openrouter = createOpenRouter({ apiKey });
 
-    const result = streamText({
+    return createScopedChatResponse({
       model: openrouter(model),
-      instructions: "Pisz po polsku, krótko i uprzejmie. Odpowiadaj na pytania użytkownika. Nie twierdź, że wykonałeś czynności, których nie możesz wykonać.",
       messages: await convertToModelMessages(messages),
-      abortSignal: request.signal,
-      onError: () => {},
-    });
-    return createUIMessageStreamResponse({
-      stream: toUIMessageStream({
-        stream: result.stream,
-        originalMessages: messages,
-        onError: () => connectionError,
-      }),
-      headers: { "Cache-Control": "no-store" },
+      originalMessages: messages,
+      signal: request.signal,
     });
   } catch {
     return new Response(connectionError, { status: 502 });
