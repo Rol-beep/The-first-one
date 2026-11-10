@@ -1,3 +1,4 @@
+import { hasClearlyUnrelatedTopic } from './studio-nova-scope';
 import type { StudioNovaOutput } from './studio-nova-output';
 
 export function customerAnalysisMessage(text: string) {
@@ -18,7 +19,7 @@ const completionClaims = [
 ];
 
 export function passesStudioNovaPolicy(output: StudioNovaOutput) {
-  if (!output.draft.trim()) return false;
+  if (!output.draft.trim() || hasClearlyUnrelatedTopic(output.draft)) return false;
   // There is no payment access, refund policy or context for unidentified cases.
   // Never silently rewrite a model result into an apparently successful one.
   if (['billing', 'unknown'].includes(output.category) && !output.needs_review) return false;

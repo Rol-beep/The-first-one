@@ -1,3 +1,4 @@
+import { isWithinStudioNovaScope, studioNovaScopeReply } from '@/lib/studio-nova-scope';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { validateUIMessages } from 'ai';
 import { z } from 'zod';
@@ -31,6 +32,11 @@ export async function POST(request: Request) {
     return new Response('Wpisz jedną niepustą wiadomość klienta, do 16000 znaków.', { status: 400, headers });
   }
 
+  const customerText = messages[0].parts.filter(part => part.type === 'text').map(part => part.text).join('\n');
+  if (!isWithinStudioNovaScope(customerText)) {
+    return new Response(studioNovaScopeReply, { status: 422, headers });
+  }
+
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   const modelId = process.env.OPENROUTER_MODEL?.trim();
   if (!apiKey || !modelId) return new Response('Brak konfiguracji AI. Ustaw OPENROUTER_API_KEY i OPENROUTER_MODEL na serwerze.', { status: 503, headers });
@@ -42,7 +48,7 @@ export async function POST(request: Request) {
     return createStudioNovaResponse({
       model: openrouter(modelId, { structuredOutputs: { strict: true }, provider: { require_parameters: true } }),
       instructions: studioNovaInstructions + '\nKontekst czasu: żądanie odebrano ' + receivedAt + ' (UTC). Jeśli data lub strefa czasowa spotkania jest niejednoznaczna, nie zakładaj rozpoczęcia w ciągu godziny: ustaw normal i needs_review=true.',
-      messages: [customerAnalysisMessage(messages[0].parts.filter(part => part.type === 'text').map(part => part.text).join('\n'))],
+      messages: [customerAnalysisMessage(customerText)],
       originalMessages: messages,
       signal: request.signal,
     });
