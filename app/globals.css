@@ -1,26 +1,384 @@
+@import url("https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Playfair+Display:wght@400;600&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: #f8f8f5;
+  --foreground: #24322c;
+  --surface: #ffffff;
+  --muted: #526059;
+  --line: #d6dfd7;
+  --accent: #00382b;
+  --accent-hover: #005141;
+  --accent-text: #ffffff;
+  --tint: #edf3eb;
+  --agent-surface: #f6f8f4;
+  --error: #9c2833;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #101a15;
+  --foreground: #eef4eb;
+  --surface: #192720;
+  --muted: #b4c4b8;
+  --line: #42594c;
+  --accent: #a9d7bd;
+  --accent-hover: #c3e8d2;
+  --accent-text: #00382b;
+  --tint: #233a2d;
+  --agent-surface: #213128;
+  --error: #ffb4bb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: #101a15;
+    --foreground: #eef4eb;
+    --surface: #192720;
+    --muted: #b4c4b8;
+    --line: #42594c;
+    --accent: #a9d7bd;
+    --accent-hover: #c3e8d2;
+    --accent-text: #00382b;
+    --tint: #233a2d;
+    --agent-surface: #213128;
+    --error: #ffb4bb;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Libre Franklin", system-ui, sans-serif;
 }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.nova-shell {
+  width: min(100% - 2rem, 54rem);
+  margin-inline: auto;
+  padding-block: clamp(1rem, 4vw, 2.5rem) 0;
+}
+
+.nova-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-block: .5rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.nova-header h1, .login-card h1, .nova-analysis h2 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+
+.nova-header h1, .login-card h1 {
+  font-size: clamp(1.45rem, 4vw, 2.15rem);
+  line-height: 1.2;
+  margin-bottom: .35rem;
+}
+
+.nova-mark {
+  width: clamp(5.5rem, 17vw, 8.5rem);
+  height: auto;
+  padding: .5rem;
+  border-radius: .75rem;
+  background: #fff;
+}
+
+.nova-muted { color: var(--muted); }
+.nova-error { color: var(--error); overflow-wrap: anywhere; }
+
+.nova-button, .nova-field {
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  min-height: 2.75rem;
+  padding: .625rem .875rem;
+  background: var(--surface);
+}
+
+.nova-field::placeholder { color: var(--muted); opacity: 1; }
+
+.nova-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: .875rem;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.nova-button:hover:not(:disabled), button.nova-chip:hover:not(:disabled) {
+  background: var(--tint);
+}
+
+.nova-primary, .nova-tabs [aria-selected="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.nova-button.nova-primary:hover:not(:disabled), .nova-tabs [aria-selected="true"]:hover {
+  background: var(--accent-hover);
+}
+
+.nova-button:disabled, button.nova-chip:disabled, .nova-upload:has(input:disabled) {
+  opacity: .65;
+  cursor: default;
+}
+
+.nova-upload:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.nova-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: .875rem;
+}
+
+.nova-chat, .nova-analysis {
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  box-shadow: 0 8px 30px #00382b0d;
+}
+
+.nova-log {
+  min-height: clamp(14rem, 46dvh, 30rem);
+  padding: clamp(.75rem, 3vw, 1.75rem);
+}
+
+.nova-bubble {
+  width: fit-content;
+  max-width: min(88%, 42rem);
+  margin-bottom: 1rem;
+  padding: .875rem 1rem;
+  border-radius: 1rem;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.nova-bubble:last-child { margin-bottom: 0; }
+
+.nova-bubble-user {
+  margin-left: auto;
+  border-bottom-right-radius: .25rem;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.nova-bubble-agent {
+  margin-right: auto;
+  border-bottom-left-radius: .25rem;
+  background: var(--agent-surface);
+  border: 1px solid var(--line);
+}
+
+.nova-speaker {
+  display: block;
+  margin-bottom: .25rem;
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.nova-sources {
+  border-top: 1px solid var(--line);
+  margin-top: .75rem;
+  padding-top: .625rem;
+  font-size: .8rem;
+}
+
+.nova-chips { display: flex; flex-wrap: wrap; gap: .375rem; }
+
+.nova-chip {
+  display: inline-block;
+  max-width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: .25rem .65rem;
+  color: var(--accent);
+  background: var(--tint);
+  font-size: .75rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.nova-chips li { min-width: 0; }
+.nova-link { text-decoration: underline; text-underline-offset: .15em; }
+button.nova-chip { min-height: 2rem; cursor: pointer; }
+
+.nova-composer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 1.25rem 1.25rem;
+  padding: .875rem clamp(.75rem, 3vw, 1.75rem) max(.875rem, env(safe-area-inset-bottom));
+  background: var(--surface);
+}
+
+.nova-composer label:not(.nova-upload), .nova-analysis label, .login-card label {
+  font-size: .875rem;
+  font-weight: 600;
+}
+
+.nova-status {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  margin-bottom: .75rem;
+  color: var(--accent);
+  font-size: .875rem;
+  font-weight: 650;
+}
+
+.nova-status-dot {
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: nova-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes nova-pulse { to { opacity: .4; } }
+@media (prefers-reduced-motion: reduce) { .nova-status-dot { animation: none; } }
+
+.nova-analysis { padding: clamp(1rem, 4vw, 2rem); margin-bottom: 1rem; }
+.nova-result { border: 1px solid var(--line); background: var(--tint); border-radius: 1rem; padding: 1.25rem; overflow-wrap: anywhere; }
+
+.login-screen {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.login-card {
+  width: min(100%, 26rem);
+  padding: clamp(1.25rem, 6vw, 2.5rem);
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  background: var(--surface);
+  box-shadow: 0 12px 40px #173d3314;
+}
+
+.nova-login-header, .nova-header-actions {
+  display: flex;
+  align-items: end;
+  gap: .625rem;
+}
+
+.nova-login-header { justify-content: space-between; margin-bottom: 1rem; }
+.nova-theme { display: grid; gap: .2rem; color: var(--muted); font-size: .875rem; font-weight: 600; }
+.nova-theme select { color: var(--foreground); }
+
+@media (max-width: 36rem) {
+  .nova-shell { width: min(100% - 1rem, 54rem); }
+  .nova-header { gap: .625rem; margin-bottom: 1rem; }
+  .nova-header p { font-size: .85rem; }
+  .nova-header { grid-template-columns: auto minmax(0, 1fr); }
+  .nova-header-actions { grid-column: 1 / -1; justify-content: space-between; }
+  .nova-bubble { max-width: 94%; }
+  .nova-tabs .nova-button { flex: 1 1 auto; }
+}
+
+.nova-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+#chat-panel:not([hidden]), .nova-chat {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nova-log { flex: 1; }
+
+.travel-header { grid-template-columns: minmax(0, 1fr) auto; }
+
+.travel-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: .875rem;
+}
+
+.travel-form input { display: block; }
+
+.travel-results { padding-bottom: 2rem; }
+
+.travel-destination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin: .5rem 0 1rem;
+}
+
+.travel-destination h2 { font-size: 1.35rem; font-weight: 700; }
+
+.travel-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.travel-card {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: .55rem;
+  grid-column: span 2;
+  background: var(--surface);
+}
+
+.travel-card:nth-child(n+4) { grid-column: span 3; }
+.travel-card h3, .travel-advice h3 { font-weight: 700; }
+.travel-value { font-size: 1.25rem; font-weight: 650; line-height: 1.3; }
+.travel-card footer { margin-top: auto; padding-top: .5rem; font-size: .8rem; }
+.travel-card li + li { margin-top: .25rem; }
+.travel-advice { margin-top: .75rem; }
+.travel-advice p { margin-top: .4rem; }
+
+@media (max-width: 42rem) {
+  .travel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .travel-card, .travel-card:nth-child(n+4) { grid-column: auto; }
+}
+
+@media (max-width: 32rem) {
+  .travel-form, .travel-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.travel-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .35rem .75rem;
+  width: 100%;
+}
+
+.travel-card-status { font-size: .8rem; font-weight: 600; }

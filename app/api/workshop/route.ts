@@ -57,10 +57,11 @@ export async function POST(request: Request) {
     });
   }
 
+  const openDashboard = form.get('next') === 'dashboard';
   if (!equal(form.get('password') ?? '', process.env.CHAT_PASSWORD!)) {
     return new Response(null, {
       status: 303,
-      headers: { ...headers, Location: '/?login=bad' },
+      headers: { ...headers, Location: openDashboard ? '/?login=bad&next=dashboard' : '/?login=bad' },
     });
   }
 
@@ -69,6 +70,6 @@ export async function POST(request: Request) {
   });
 
   return new Response(null, {
-    status: 303, headers: { ...headers, Location: '/' },
+    status: 303, headers: { ...headers, Location: openDashboard ? '/dashboard' : '/' },
   });
 }

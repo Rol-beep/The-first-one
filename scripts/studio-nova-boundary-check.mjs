@@ -32,7 +32,7 @@ const message = { id: 'fictional-message', role: 'user', parts: [{ type: 'text',
 const base = { messages: [message] };
 const observations = [];
 try {
-  const { POST } = load('../app/api/analyze/route.ts');
+  const { POST } = load('../app/api/agent/route.ts');
   const cases = [
     ['send_now', { ...base, send_now: true }],
     ['permissions', { ...base, permissions: { send_email: true, refund: true, reserve: true } }],
@@ -46,21 +46,21 @@ try {
     ['developer message role', { messages: [{ ...message, role: 'developer' }] }],
   ];
   for (const [name, body] of cases) {
-    const response = await POST(new Request('https://studio-nova.test/api/analyze', {
-      method: 'POST', headers: { Origin: 'https://studio-nova.test', 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    const response = await POST(new Request('https://studio-nova.test/api/agent', {
+      method: 'POST', headers: { Origin: 'https://studio-nova.test', 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: "analyze", ...body }),
     }));
     assert.equal(response.status, 400, name);
     observations.push({ case: name, http_status: response.status, rejected: true });
   }
   authenticated = false;
-  const anonymous = await POST(new Request('https://studio-nova.test/api/analyze', {
-    method: 'POST', headers: { Origin: 'https://studio-nova.test' }, body: JSON.stringify({ ...base, send_now: true }),
+  const anonymous = await POST(new Request('https://studio-nova.test/api/agent', {
+    method: 'POST', headers: { Origin: 'https://studio-nova.test' }, body: JSON.stringify({ mode: "analyze", ...base, send_now: true }),
   }));
   assert.equal(anonymous.status, 401);
   observations.push({ case: 'no session', http_status: anonymous.status, rejected: true });
   authenticated = true;
-  const crossOrigin = await POST(new Request('https://studio-nova.test/api/analyze', {
-    method: 'POST', headers: { Origin: 'https://attacker.invalid' }, body: JSON.stringify(base),
+  const crossOrigin = await POST(new Request('https://studio-nova.test/api/agent', {
+    method: 'POST', headers: { Origin: 'https://attacker.invalid' }, body: JSON.stringify({ mode: "analyze", ...base }),
   }));
   assert.equal(crossOrigin.status, 403);
   observations.push({ case: 'cross origin', http_status: crossOrigin.status, rejected: true });
