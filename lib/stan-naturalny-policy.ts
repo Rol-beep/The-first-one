@@ -1,4 +1,4 @@
-import type { StudioNovaOutput } from './studio-nova-output';
+import type { StanNaturalnyOutput } from './stan-naturalny-output';
 
 export function customerAnalysisMessage(text: string) {
   // JSON encoding keeps fake closing delimiters/roles inside a data string.
@@ -17,7 +17,7 @@ const completionClaims = [
   /\b(?:wyslalem|wyslalismy)\s+(?:wiadomosc|e-?mail)\b/g,
 ];
 
-export function passesStudioNovaPolicy(output: StudioNovaOutput) {
+export function passesStanNaturalnyPolicy(output: StanNaturalnyOutput) {
   if (!output.draft.trim()) return false;
   // There is no payment access, refund policy or context for unidentified cases.
   // Never silently rewrite a model result into an apparently successful one.

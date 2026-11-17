@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const studioNovaOutputSchema = z.object({
+export const stanNaturalnyOutputSchema = z.object({
   category: z.enum(['sales', 'support', 'billing', 'unknown'])
     .describe('sales: oferta, cena lub zakup; support: problem techniczny; billing: płatność lub zwrot; unknown: brak podstaw do klasyfikacji'),
   priority: z.enum(['normal', 'high'])
@@ -11,7 +11,7 @@ export const studioNovaOutputSchema = z.object({
     .describe('true, gdy brakuje danych albo potrzebna jest decyzja lub działanie pracownika'),
 }).strict();
 
-export type StudioNovaOutput = z.infer<typeof studioNovaOutputSchema>;
+export type StanNaturalnyOutput = z.infer<typeof stanNaturalnyOutputSchema>;
 
 export const outputErrorSchema = z.object({
   code: z.enum(['MODEL_REFUSAL', 'OUTPUT_TRUNCATED', 'INVALID_OUTPUT', 'MODEL_ERROR', 'REQUEST_ABORTED', 'MODEL_UNSUPPORTED', 'MODEL_CAPABILITIES_UNAVAILABLE', 'OUTPUT_POLICY_VIOLATION']),

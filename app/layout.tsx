@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Asystent Stan Naturalny",
-  description: "Czat i analiza wiadomości z asystentem Stan Naturalny.",
+  description: "Czat i analiza wiadomości z asystentem marki Stan Naturalny.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -15,7 +15,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <script dangerouslySetInnerHTML={{ __html: `try {
-          const theme = localStorage.getItem("studio-nova-theme");
+          const theme = localStorage.getItem("stan-naturalny-theme");
           if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
         } catch {}` }} />
         {children}

@@ -1,6 +1,6 @@
 import { APICallError, UnsupportedFunctionalityError } from 'ai';
 import { z } from 'zod';
-import type { OutputErrorCode } from './studio-nova-output';
+import type { OutputErrorCode } from './stan-naturalny-output';
 
 export class AnalysisConfigurationError extends Error {
   constructor(public readonly code: OutputErrorCode) { super(code); }

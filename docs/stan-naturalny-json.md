@@ -1,4 +1,4 @@
-# Studio Nova: dwa tryby w istniejącym chatbocie
+# Stan Naturalny: dwa tryby w istniejącym chatbocie
 
 ## Zmiana i dokumentacja API
 
@@ -26,7 +26,7 @@ Nie odczytywano plików sekretów ani nie wykonywano rzeczywistych generacji.
 
 - **Zwykły czat**: `/api/chat`, dotychczasowy streaming tekstu. Nie wymaga
   JSON Schema ani odczytu katalogu modeli.
-- **Analiza Studio Nova**: `/api/analyze`, jedna wiadomość klienta do 16000
+- **Analiza Stan Naturalny**: `/api/analyze`, jedna wiadomość klienta do 16000
   znaków. Osobny formularz i wynik: kategoria, priorytet, szkic, status sprawdzenia.
   Nie dołącza historii zwykłego czatu. Każdy wynik jest szkicem, również gdy
   `needs_review=false`. Nie wysyła maili, nie pobiera płatności i nie rezerwuje.
@@ -144,7 +144,7 @@ Build wymaga dostępu do istniejących fontów Google w layout.
 
 1. Zaloguj się. W „Zwykłym czacie” wyślij dwie wiadomości: tekstowa odpowiedź
    i historia powinny działać jak dotąd.
-2. Przełącz na „Analiza Studio Nova”. Sprawdź:
+2. Przełącz na „Analiza Stan Naturalny”. Sprawdź:
 
 | Wiadomość | category | priority | needs_review |
 | --- | --- | --- | --- |

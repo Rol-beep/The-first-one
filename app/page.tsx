@@ -4,19 +4,25 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
+import ActionIcon from './action-icon';
 import Chat from './workshop-chat';
 import ThemeSwitch from './theme-switch';
 import { authenticated } from '@/lib/workshop';
 
-function BrandLogo() {
-  return <Image
-    src="/stan-naturalny-logo.svg"
-    alt="Stan Naturalny"
-    width={500}
-    height={150}
-    className="nova-mark"
-    unoptimized
-  />;
+function BrandHeading() {
+  return (
+    <div className="brand-heading">
+      <Image
+        src="/stan-naturalny-logo.svg"
+        alt=""
+        width={500}
+        height={150}
+        className="brand-logo"
+        unoptimized
+      />
+      <h1>Asystent Stan Naturalny</h1>
+    </div>
+  );
 }
 
 async function WorkshopPage({
@@ -32,12 +38,8 @@ async function WorkshopPage({
     return (
       <main className="login-screen">
         <div className="login-card">
-          <header className="nova-login-header">
-            <BrandLogo />
-            <ThemeSwitch />
-          </header>
-          <h1>Asystent Stan Naturalny</h1>
-          <p className="nova-muted">{openDashboard ? 'Zaloguj się, aby otworzyć asystenta podróży.' : 'Zaloguj się, aby otworzyć czat.'}</p>
+          <BrandHeading />
+          <p className="stan-naturalny-muted">{openDashboard ? 'Zaloguj się, aby otworzyć asystenta podróży.' : 'Zaloguj się, aby otworzyć czat.'}</p>
           <form action="/api/workshop" method="post" className="mt-7">
             {openDashboard && <input type="hidden" name="next" value="dashboard" />}
             <label htmlFor="password">Hasło warsztatowe</label>
@@ -48,17 +50,18 @@ async function WorkshopPage({
               autoComplete="current-password"
               required
               maxLength={1024}
-              className="nova-field mt-2 mb-4 w-full"
+              className="stan-naturalny-field mt-2 mb-4 w-full"
             />
             <button
               type="submit"
-              className="nova-button nova-primary w-full"
+              className="stan-naturalny-button stan-naturalny-primary login-submit w-full"
             >
               Wejdź
+              <ActionIcon name="logout" />
             </button>
           </form>
           {params.login === 'bad' &&
-            <p role="alert" className="nova-error mt-4">
+            <p role="alert" className="stan-naturalny-error mt-4">
               Nieprawidłowe hasło.
             </p>}
         </div>
@@ -69,19 +72,19 @@ async function WorkshopPage({
   if (openDashboard) redirect('/dashboard');
 
   return (
-    <main className="nova-shell">
-      <header className="nova-header">
-        <BrandLogo />
-        <div>
-          <h1>Asystent Stan Naturalny</h1>
-          <p className="nova-muted">Zadawaj pytania, twórz obrazy i przygotowuj szkice odpowiedzi dla klientów.</p>
-        </div>
-        <div className="nova-header-actions">
-          <Link href="/dashboard" className="nova-button">Asystent podróży</Link>
+    <main className="stan-naturalny-shell">
+      <header className="stan-naturalny-header chat-header">
+        <BrandHeading />
+        <div className="stan-naturalny-header-actions">
+          <Link href="/dashboard" className="stan-naturalny-button icon-control" aria-label="Asystent podróży">
+            <ActionIcon name="travel" />
+          </Link>
           <ThemeSwitch />
           <form action="/api/workshop" method="post">
             <input type="hidden" name="action" value="logout" />
-            <button type="submit" className="nova-button">Wyjdź</button>
+            <button type="submit" className="stan-naturalny-button icon-control" aria-label="Wyjdź">
+              <ActionIcon name="logout" />
+            </button>
           </form>
         </div>
       </header>

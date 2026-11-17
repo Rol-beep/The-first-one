@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import ActionIcon from "./action-icon";
 
 export default function ThemeSwitch() {
   const select = useRef<HTMLSelectElement>(null);
@@ -12,16 +13,16 @@ export default function ThemeSwitch() {
   }, []);
 
   return (
-    <label className="nova-theme">
-      <span>Motyw</span>
+    <label className="stan-naturalny-button icon-control stan-naturalny-theme" title="Motyw">
+      <ActionIcon name="theme" />
       <select
         ref={select}
-        className="nova-field"
+        aria-label="Motyw"
         defaultValue="system"
         onChange={({ currentTarget: { value } }) => {
           document.documentElement.dataset.theme = value;
           try {
-            localStorage.setItem("studio-nova-theme", value);
+            localStorage.setItem("stan-naturalny-theme", value);
           } catch {
             // The current selection still works when storage is unavailable.
           }

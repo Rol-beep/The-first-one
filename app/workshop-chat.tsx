@@ -5,8 +5,9 @@ import { convertFileListToFileUIParts, DefaultChatTransport, getToolName, isTool
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { hasPhotoSignature, imagePromptLimit, photoTypes, validPhoto } from "@/lib/chat-image";
-import { displayChatError } from "@/lib/studio-nova-output";
-import AnalysisPanel from "./studio-nova-analysis";
+import { displayChatError } from "@/lib/stan-naturalny-output";
+import AnalysisPanel from "./stan-naturalny-analysis";
+import ActionIcon from "./action-icon";
 
 type ChatMessage = UIMessage<{
   sourcesRetrievedAt?: string;
@@ -16,9 +17,9 @@ type ChatMessage = UIMessage<{
 }>;
 
 const imageSuggestions = [
-  { label: "Konsultacja online", prompt: "Jasna, spokojna ilustracja konsultacji online dla Studio Nova. Dwie osoby rozmawiają przez wideopołączenie. Bez napisów." },
-  { label: "Grafika do oferty", prompt: "Minimalistyczna grafika do oferty konsultacji Studio Nova. Laptop, notes i miękkie światło na jasnym biurku. Bez napisów." },
-  { label: "Pomoc techniczna", prompt: "Przyjazna ilustracja pomocy technicznej Studio Nova. Słuchawki z mikrofonem i dymek rozmowy na jasnym tle. Bez napisów." },
+  { label: "Konsultacja online", prompt: "Jasna, spokojna ilustracja konsultacji online dla marki Stan Naturalny. Dwie osoby rozmawiają przez wideopołączenie. Bez napisów." },
+  { label: "Grafika do oferty", prompt: "Minimalistyczna grafika do oferty konsultacji Stan Naturalny. Laptop, notes i miękkie światło na jasnym biurku. Bez napisów." },
+  { label: "Pomoc techniczna", prompt: "Przyjazna ilustracja pomocy technicznej Stan Naturalny. Słuchawki z mikrofonem i dymek rozmowy na jasnym tle. Bez napisów." },
 ];
 
 const chatTransport = new DefaultChatTransport<ChatMessage>({
@@ -79,13 +80,13 @@ function MessageSources({ message }: { message: ChatMessage }) {
 
   const retrievedAt = message.metadata?.sourcesRetrievedAt;
   return (
-    <div className="nova-sources">
+    <div className="stan-naturalny-sources">
       <p className="font-semibold">Źródła</p>
-      <ul className="nova-chips my-2">
+      <ul className="stan-naturalny-chips my-2">
         {sources.map((source, index) => (
           <li key={index}>
             <a
-              className="nova-chip nova-link"
+              className="stan-naturalny-chip stan-naturalny-link"
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
@@ -133,9 +134,9 @@ function MessageTools({ message }: { message: ChatMessage }) {
   if (usedTools.size === 0) return null;
 
   return (
-    <ol aria-label="Kroki agenta" className="nova-chips mb-2">
+    <ol aria-label="Kroki agenta" className="stan-naturalny-chips mb-2">
       {[...usedTools].map(([number, names]) => (
-        <li key={number} className="nova-chip">
+        <li key={number} className="stan-naturalny-chip">
           {number}. {[...names].map(name => labels.get(name) ?? name).join(", ")}
         </li>
       ))}
@@ -172,18 +173,18 @@ function GeneratedImage({ part }: { part: Extract<ChatMessage["parts"][number], 
     return <p role="status" className="mt-2 text-sm">Generuję obraz…</p>;
   }
   if (part.state === "output-error") {
-    return <p role="alert" className="nova-error mt-2 text-sm">Nie udało się wygenerować obrazu.</p>;
+    return <p role="alert" className="stan-naturalny-error mt-2 text-sm">Nie udało się wygenerować obrazu.</p>;
   }
   if (part.state !== "output-available") return null;
   const output = part.output as { image?: { url: string; modelId: string | null }; error?: string };
-  if (!output.image) return <p role="alert" className="nova-error mt-2 text-sm">{output.error}</p>;
+  if (!output.image) return <p role="alert" className="stan-naturalny-error mt-2 text-sm">{output.error}</p>;
 
   return (
     <figure className="mt-2">
       <Image src={output.image.url} alt="Wygenerowany obraz" width={512} height={512}
         unoptimized className="h-auto w-full rounded-lg" />
       <figcaption className="mt-2 text-xs">Model: {output.image.modelId ?? "identyfikator niedostępny"}</figcaption>
-      <a href={output.image.url} download="studio-nova-obraz" className="nova-button mt-2">
+      <a href={output.image.url} download="stan-naturalny-obraz" className="stan-naturalny-button mt-2">
         Pobierz
       </a>
     </figure>
@@ -241,18 +242,27 @@ function PlainChat() {
   }
 
   return (
-    <div className="nova-chat">
+    <div className="stan-naturalny-chat">
 
       <section
         aria-label="Rozmowa"
         role="log"
         aria-live="polite"
-        className="nova-log"
+        className={messages.length === 0 ? "stan-naturalny-log chat-log-empty" : "stan-naturalny-log"}
       >
+        {messages.length === 0 && (
+          <div className="chat-welcome">
+            <span className="chat-welcome-icon" aria-hidden="true">
+              <ActionIcon name="chat" />
+            </span>
+            <h2>Co dziś zrobimy?</h2>
+            <p>Zadaj pytanie, zaplanuj podróż albo opisz obraz, który chcesz stworzyć.</p>
+          </div>
+        )}
         {messages.map((message) => (
-          <div key={message.id} className={`nova-bubble ${message.role === "user" ? "nova-bubble-user" : "nova-bubble-agent"}`}>
+          <div key={message.id} className={`stan-naturalny-bubble ${message.role === "user" ? "stan-naturalny-bubble-user" : "stan-naturalny-bubble-agent"}`}>
             {message.role === "assistant" && <MessageTools message={message} />}
-            <strong className="nova-speaker">{message.role === "user" ? "Ty" : "Agent"}</strong>
+            <strong className="stan-naturalny-speaker">{message.role === "user" ? "Ty" : "Agent"}</strong>
             {message.parts.map((part, index) =>
               part.type === "text" ? (
                 <span key={index} className="whitespace-pre-wrap">
@@ -277,17 +287,17 @@ function PlainChat() {
         ))}
       </section>
 
-      <div className="nova-composer">
+      <div className="stan-naturalny-composer">
         {busy && (
-          <p role="status" className="nova-status">
-            <span className="nova-status-dot" aria-hidden="true" />
+          <p role="status" className="stan-naturalny-status">
+            <span className="stan-naturalny-status-dot" aria-hidden="true" />
             {generating ? "Generuję obraz…" : readingPhoto ? "Wczytuję zdjęcie…" : status === "submitted" ? "Czekam na odpowiedź…" : "Agent pisze…"}
           </p>
         )}
-        {imageError && <p role="alert" className="nova-error mb-3">{imageError}</p>}
+        {imageError && <p role="alert" className="stan-naturalny-error mb-3">{imageError}</p>}
 
         {error && (
-          <p role="alert" className="nova-error mb-3">
+          <p role="alert" className="stan-naturalny-error mb-3">
             {displayChatError(error.message || "Błąd połączenia. Spróbuj ponownie.")}
           </p>
         )}
@@ -305,89 +315,91 @@ function PlainChat() {
             setPhoto(undefined);
           }}
         >
-          <label htmlFor="message">Wiadomość</label>
-          <div className="mt-2 flex gap-2">
+          <div className="composer-box">
+            <label htmlFor="message" className="sr-only">Wiadomość</label>
             <input
               id="message"
               value={input}
               onChange={(event) => setInput(event.target.value)}
               disabled={busy}
               placeholder="Napisz wiadomość…"
-              className="nova-field min-w-0 flex-1"
+              className="composer-input"
             />
-            {agentWorking ? (
-              <button type="button" onClick={() => void stop()} className="nova-button">
-                Stop
+            <div className="composer-actions">
+              <label className="stan-naturalny-button icon-control stan-naturalny-upload" title="Dodaj zdjęcie">
+                <ActionIcon name="attach" />
+                <input
+                  type="file"
+                  aria-label="Dodaj zdjęcie"
+                  accept={photoTypes.join(",")}
+                  className="sr-only"
+                  disabled={busy}
+                  onChange={async (event) => {
+                    const files = event.currentTarget.files;
+                    const file = files?.[0];
+                    if (!files || !file) return;
+                    setImageError("");
+                    setReadingPhoto(true);
+                    try {
+                      if (!validPhoto(file) || !await hasPhotoSignature(file)) {
+                        setPhoto(undefined);
+                        setImageError("Dodaj zdjęcie JPG, PNG lub WebP o rozmiarze do 4 MB.");
+                        return;
+                      }
+                      const [part] = await convertFileListToFileUIParts(files);
+                      setPhoto(part);
+                    } catch {
+                      setImageError("Nie udało się wczytać zdjęcia.");
+                    } finally {
+                      event.target.value = "";
+                      setReadingPhoto(false);
+                    }
+                  }}
+                />
+              </label>
+              <button type="button" popoverTarget="image-ideas" disabled={busy || Boolean(photo)}
+                className="stan-naturalny-button icon-control composer-ideas-trigger" aria-label="Pomysły na obraz">
+                <ActionIcon name="ideas" />
               </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={busy || (!input.trim() && !photo)}
-                className="nova-button nova-primary"
-              >
-                {busy ? "Czekaj…" : "Wyślij"}
-              </button>
-            )}
-          </div>
-          <div className="mt-3">
-            <p className="mb-1 text-sm">Pomysły na obraz</p>
-            <div className="flex flex-wrap gap-2">
-              {imageSuggestions.map(({ label, prompt }) => (
-                <button
-                  key={label}
-                  type="button"
-                  disabled={busy || Boolean(photo)}
-                  onClick={() => {
+              <div id="image-ideas" popover="auto" className="composer-ideas">
+                <p>Pomysły na obraz</p>
+                {imageSuggestions.map(({ label, prompt }) => (
+                  <button key={label} type="button" disabled={busy || Boolean(photo)} onClick={(event) => {
                     setInput(prompt);
                     setImageError("");
-                  }}
-                  className="nova-chip"
-                >
-                  {label}
+                    event.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover();
+                    document.getElementById("message")?.focus();
+                  }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => void generate()} disabled={busy || !input.trim() || Boolean(photo)}
+                className="stan-naturalny-button icon-control" aria-label="Wygeneruj obraz">
+                <ActionIcon name="image" />
+              </button>
+              {agentWorking ? (
+                <button type="button" onClick={() => void stop()}
+                  className="stan-naturalny-button icon-control stan-naturalny-primary composer-submit" aria-label="Zatrzymaj odpowiedź">
+                  <ActionIcon name="stop" />
                 </button>
-              ))}
+              ) : (
+                <button type="submit" disabled={busy || (!input.trim() && !photo)}
+                  className="stan-naturalny-button icon-control stan-naturalny-primary composer-submit" aria-label="Wyślij">
+                  <ActionIcon name="send" />
+                </button>
+              )}
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <label className="nova-button nova-upload">
-              Dodaj zdjęcie
-              <input
-                type="file"
-                accept={photoTypes.join(",")}
-                className="sr-only"
-                disabled={busy}
-                onChange={async (event) => {
-                  const files = event.currentTarget.files;
-                  const file = files?.[0];
-                  if (!files || !file) return;
-                  setImageError("");
-                  setReadingPhoto(true);
-                  try {
-                    if (!validPhoto(file) || !await hasPhotoSignature(file)) {
-                      setPhoto(undefined);
-                      setImageError("Dodaj zdjęcie JPG, PNG lub WebP o rozmiarze do 4 MB.");
-                      return;
-                    }
-                    const [part] = await convertFileListToFileUIParts(files);
-                    setPhoto(part);
-                  } catch {
-                    setImageError("Nie udało się wczytać zdjęcia.");
-                  } finally {
-                    event.target.value = "";
-                    setReadingPhoto(false);
-                  }
-                }}
-              />
-            </label>
-            <button type="button" onClick={() => void generate()} disabled={busy || !input.trim() || Boolean(photo)} className="nova-button">
-              Wygeneruj obraz
-            </button>
-            {photo && (
-              <button type="button" disabled={busy} onClick={() => setPhoto(undefined)} className="nova-button break-all">
-                Usuń zdjęcie ({photo.filename})
+          {photo && (
+            <div className="composer-photo">
+              <span>{photo.filename ?? "Zdjęcie"}</span>
+              <button type="button" disabled={busy} onClick={() => setPhoto(undefined)}
+                className="stan-naturalny-button icon-control" aria-label="Usuń zdjęcie">
+                <ActionIcon name="remove" />
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </form>
       </div>
     </div>
@@ -397,9 +409,13 @@ function PlainChat() {
 export default function Home() {
   const [mode, setMode] = useState<'chat' | 'analysis'>('chat');
   return <>
-    <div role="tablist" aria-label="Tryb pracy" className="nova-tabs">
-      <button id="chat-tab" role="tab" aria-selected={mode === 'chat'} aria-controls="chat-panel" onClick={() => setMode('chat')} className="nova-button">Zwykły czat</button>
-      <button id="analysis-tab" role="tab" aria-selected={mode === 'analysis'} aria-controls="analysis-panel" onClick={() => setMode('analysis')} className="nova-button">Analiza wiadomości</button>
+    <div role="tablist" aria-label="Tryb pracy" className="stan-naturalny-tabs">
+      <button id="chat-tab" role="tab" aria-selected={mode === 'chat'} aria-controls="chat-panel" onClick={() => setMode('chat')} className="stan-naturalny-button icon-control" aria-label="Zwykły czat">
+        <ActionIcon name="chat" />
+      </button>
+      <button id="analysis-tab" role="tab" aria-selected={mode === 'analysis'} aria-controls="analysis-panel" onClick={() => setMode('analysis')} className="stan-naturalny-button icon-control" aria-label="Analiza wiadomości">
+        <ActionIcon name="analysis" />
+      </button>
     </div>
     <div id="chat-panel" role="tabpanel" aria-labelledby="chat-tab" hidden={mode !== 'chat'}><PlainChat /></div>
     <div id="analysis-panel" role="tabpanel" aria-labelledby="analysis-tab" hidden={mode !== 'analysis'}><AnalysisPanel /></div>

@@ -146,7 +146,7 @@ export async function chat(request: Request, payload: unknown, form?: FormData) 
           return {
             // OpenRouter only sends tool_choice when tool definitions are present.
             toolChoice: "none",
-            instructions: `${instructions}\nTo ostatni krok. Odpowiedz na podstawie zebranych wyników i wskaż, czego nie udało się ustalić.`,
+            instructions: `${instructions}\nTo ostatni krok. Odpowiedz na podstawie zebranych wyników. Jeśli zostały niewykonane działania, powiedz, że zabrakło kroków na dalsze wywołania narzędzi. Nie opisuj tego jako awarii narzędzia.`,
           };
         }
         if (imagePrompt && stepNumber === 0) {

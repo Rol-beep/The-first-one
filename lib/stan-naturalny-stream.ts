@@ -1,16 +1,16 @@
-import { passesStudioNovaPolicy } from './studio-nova-policy';
-import { isUnsupportedStructuredOutput } from './studio-nova-capabilities';
+import { passesStanNaturalnyPolicy } from './stan-naturalny-policy';
+import { isUnsupportedStructuredOutput } from './stan-naturalny-capabilities';
 import {
   createUIMessageStream, createUIMessageStreamResponse,
   NoObjectGeneratedError, Output, streamText,
   type LanguageModel, type ModelMessage, type UIMessage,
 } from 'ai';
 import {
-  hasProviderRefusal, outputError, studioNovaOutputSchema,
+  hasProviderRefusal, outputError, stanNaturalnyOutputSchema,
   type OutputErrorCode,
-} from './studio-nova-output';
+} from './stan-naturalny-output';
 
-export function createStudioNovaResponse({ model, instructions, messages, originalMessages, signal }: {
+export function createStanNaturalnyResponse({ model, instructions, messages, originalMessages, signal }: {
   model: LanguageModel;
   instructions: string;
   messages: ModelMessage[];
@@ -33,7 +33,7 @@ export function createStudioNovaResponse({ model, instructions, messages, origin
           model,
           instructions,
           messages,
-          output: Output.object({ schema: studioNovaOutputSchema, name: 'studio_nova_reply' }),
+          output: Output.object({ schema: stanNaturalnyOutputSchema, name: 'stan_naturalny_reply' }),
           includeRawChunks: true,
           maxOutputTokens: 2000,
           maxRetries: 0,
@@ -70,9 +70,9 @@ export function createStudioNovaResponse({ model, instructions, messages, origin
         }
         if (streamError || finishReason !== 'stop') return fail('MODEL_ERROR');
         // Independent validation at the application boundary, even after SDK validation.
-        const validated = studioNovaOutputSchema.safeParse(complete.output);
+        const validated = stanNaturalnyOutputSchema.safeParse(complete.output);
         if (!validated.success) return fail('INVALID_OUTPUT');
-        if (!passesStudioNovaPolicy(validated.data)) return fail('OUTPUT_POLICY_VIOLATION');
+        if (!passesStanNaturalnyPolicy(validated.data)) return fail('OUTPUT_POLICY_VIOLATION');
         writer.write({ type: 'text-start', id: 'validated-json' });
         writer.write({ type: 'text-delta', id: 'validated-json', delta: JSON.stringify(validated.data, null, 2) });
         writer.write({ type: 'text-end', id: 'validated-json' });

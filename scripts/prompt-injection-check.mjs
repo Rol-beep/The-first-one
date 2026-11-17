@@ -10,10 +10,10 @@ load.extensions['.ts'] = (module, filename) => {
   });
   module._compile(result.outputText, filename);
 };
-const { createStudioNovaResponse } = load('../lib/studio-nova-stream.ts');
-const { studioNovaInstructions } = load('../lib/studio-nova-instructions.ts');
+const { createStanNaturalnyResponse } = load('../lib/stan-naturalny-stream.ts');
+const { stanNaturalnyInstructions } = load('../lib/stan-naturalny-instructions.ts');
 const { MockLanguageModelV4 } = load('ai/test');
-const fixture = JSON.parse(readFileSync(new URL('../tests/fixtures/studio-nova-injection.json', import.meta.url), 'utf8'));
+const fixture = JSON.parse(readFileSync(new URL('../tests/fixtures/stan-naturalny-injection.json', import.meta.url), 'utf8'));
 const text = JSON.stringify(fixture.simulated_compromised_output);
 const model = new MockLanguageModelV4({ doStream: async () => ({
   stream: new ReadableStream({ start(controller) {
@@ -33,8 +33,8 @@ const model = new MockLanguageModelV4({ doStream: async () => ({
 let networkCalls = 0;
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async () => { networkCalls++; throw new Error('Network forbidden during local injection test'); };
-const response = createStudioNovaResponse({
-  model, instructions: studioNovaInstructions,
+const response = createStanNaturalnyResponse({
+  model, instructions: stanNaturalnyInstructions,
   messages: [{ role: 'user', content: fixture.customer_message }],
   originalMessages: [{ id: 'fictional-client', role: 'user', parts: [{ type: 'text', text: fixture.customer_message }] }],
   signal: new AbortController().signal,

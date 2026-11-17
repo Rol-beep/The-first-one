@@ -95,27 +95,27 @@ export default function TravelPanel() {
 
   return (
     <>
-      <form className="nova-analysis travel-form" onSubmit={event => {
+      <form className="stan-naturalny-analysis travel-form" onSubmit={event => {
         event.preventDefault();
         const fields = new FormData(event.currentTarget);
         void load({ city: String(fields.get("city")), date: String(fields.get("date")) });
       }}>
         <label htmlFor="city">Dokąd jedziesz?
           <input id="city" name="city" placeholder="Np. Lizbona" required minLength={2} maxLength={100}
-            className="nova-field mt-2 w-full" />
+            className="stan-naturalny-field mt-2 w-full" />
         </label>
         <label htmlFor="trip-date">Kiedy?
-          <input id="trip-date" name="date" type="date" required className="nova-field mt-2 w-full" />
+          <input id="trip-date" name="date" type="date" required className="stan-naturalny-field mt-2 w-full" />
         </label>
-        <button className="nova-button nova-primary" type="submit" disabled={pending}>Sprawdź</button>
+        <button className="stan-naturalny-button stan-naturalny-primary" type="submit" disabled={pending}>Sprawdź</button>
       </form>
 
-      {pending && <p role="status" className="nova-status">
-        <span className="nova-status-dot" aria-hidden="true" /> Pobieram dane i przygotowuję podsumowanie…
+      {pending && <p role="status" className="stan-naturalny-status">
+        <span className="stan-naturalny-status-dot" aria-hidden="true" /> Pobieram dane i przygotowuję podsumowanie…
       </p>}
-      {error && <p role="alert" className="nova-error mb-4">{error}</p>}
-      {needsLogin && <p role="alert" className="nova-error mb-4">
-        Sesja wygasła. <Link href="/?next=dashboard" className="nova-link">Zaloguj się ponownie</Link>
+      {error && <p role="alert" className="stan-naturalny-error mb-4">{error}</p>}
+      {needsLogin && <p role="alert" className="stan-naturalny-error mb-4">
+        Sesja wygasła. <Link href="/?next=dashboard" className="stan-naturalny-link">Zaloguj się ponownie</Link>
       </p>}
 
       {lastTrip && (
@@ -123,9 +123,9 @@ export default function TravelPanel() {
           <div className="travel-destination">
             <div>
               <h2>{destination}</h2>
-              <p className="nova-muted"><time dateTime={lastTrip.date}>{lastTrip.date}</time></p>
+              <p className="stan-naturalny-muted"><time dateTime={lastTrip.date}>{lastTrip.date}</time></p>
             </div>
-            <button type="button" className="nova-button" disabled={pending}
+            <button type="button" className="stan-naturalny-button" disabled={pending}
               onClick={() => { if (lastTrip) void load(lastTrip); }}>Odśwież</button>
           </div>
           <div className="travel-grid">
@@ -134,19 +134,19 @@ export default function TravelPanel() {
               const loaded = card && !card.unavailable;
               const loading = pending && !card;
               return (
-                <article key={title} className="nova-result travel-card" aria-busy={loading}>
+                <article key={title} className="stan-naturalny-result travel-card" aria-busy={loading}>
                   <div className="travel-card-heading">
                     <h3>{title}</h3>
-                    <span className="travel-card-status nova-muted">{loaded ? "OK" : loading ? "Ładuję…" : "Brak danych"}</span>
+                    <span className="travel-card-status stan-naturalny-muted">{loaded ? "OK" : loading ? "Ładuję…" : "Brak danych"}</span>
                   </div>
                   {loaded ? (
                     <>
                       <p className={title === "Wikipedia" ? "" : "travel-value"}>{card.value}</p>
                       {card.details && <ul>{card.details.map(detail => <li key={detail}>{detail}</li>)}</ul>}
-                      {card.link && <a href={card.link} className="nova-link" target="_blank" rel="noreferrer">Czytaj w Wikipedii</a>}
+                      {card.link && <a href={card.link} className="stan-naturalny-link" target="_blank" rel="noreferrer">Czytaj w Wikipedii</a>}
                     </>
                   ) : !loading && <p>Brak danych — spróbuj odświeżyć</p>}
-                  <footer className="nova-muted">
+                  <footer className="stan-naturalny-muted">
                     {card?.source ?? travelSources[title]}
                     {card && <>
                       {" · "}{loaded ? "Pobrano" : "Próba pobrania"}{" "}
@@ -158,7 +158,7 @@ export default function TravelPanel() {
               );
             })}
           </div>
-          <aside className="nova-result travel-advice">
+          <aside className="stan-naturalny-result travel-advice">
             <h3>Podsumowanie agenta</h3>
             {missingSources.length > 0 && <p>Brak danych ze źródeł: {missingSources.join(", ")}.</p>}
             <p>{advice ?? (pending

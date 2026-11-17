@@ -3,7 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useState } from 'react';
-import { displayChatError, studioNovaOutputSchema } from '@/lib/studio-nova-output';
+import { displayChatError, stanNaturalnyOutputSchema } from '@/lib/stan-naturalny-output';
 
 const categories = { sales: 'Oferta i cena', support: 'Problem techniczny', billing: 'Płatność lub zwrot', unknown: 'Brak rozpoznanej sprawy' };
 
@@ -25,15 +25,15 @@ export default function AnalysisPanel() {
   if (!busy && !error && !interrupted && last?.role === 'assistant') {
     try {
       const text = last.parts.filter(part => part.type === 'text').map(part => part.text).join('');
-      const validated = studioNovaOutputSchema.safeParse(JSON.parse(text));
+      const validated = stanNaturalnyOutputSchema.safeParse(JSON.parse(text));
       if (validated.success) result = validated.data;
       else invalidResult = true;
     } catch { invalidResult = true; }
   }
 
-  return <section className="nova-analysis">
-    <h2 className="mb-2 text-2xl font-semibold">Analiza wiadomości Studio Nova</h2>
-    <p className="nova-muted mb-5">Wklej wiadomość klienta. Każda analiza dotyczy jednej wiadomości. Wynik zawsze jest szkicem — niczego nie wysyłamy ani nie rezerwujemy.</p>
+  return <section className="stan-naturalny-analysis">
+    <h2 className="mb-2 text-2xl font-semibold">Analiza wiadomości · Stan Naturalny</h2>
+    <p className="stan-naturalny-muted mb-5">Wklej wiadomość klienta. Każda analiza dotyczy jednej wiadomości. Wynik zawsze jest szkicem — niczego nie wysyłamy ani nie rezerwujemy.</p>
     <form onSubmit={event => {
       event.preventDefault();
       if (busy || !input.trim()) return;
@@ -41,18 +41,18 @@ export default function AnalysisPanel() {
       void sendMessage({ text: input.trim() });
     }}>
       <label htmlFor="customer-message">Wiadomość klienta</label>
-      <textarea id="customer-message" value={input} onChange={event => setInput(event.target.value)} required maxLength={16000} disabled={busy} rows={5} className="nova-field my-2 w-full" />
+      <textarea id="customer-message" value={input} onChange={event => setInput(event.target.value)} required maxLength={16000} disabled={busy} rows={5} className="stan-naturalny-field my-2 w-full" />
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={busy || !input.trim()} className="nova-button nova-primary">{busy ? 'Analizuję…' : 'Analiza JSON'}</button>
-        {busy && <button type="button" onClick={() => { setInterrupted(true); void stop(); }} className="nova-button">Przerwij analizę</button>}
-        {!busy && <button type="button" onClick={() => { setInput(''); setMessages([]); clearError(); setInterrupted(false); }} className="nova-button">Wyczyść analizę</button>}
+        <button type="submit" disabled={busy || !input.trim()} className="stan-naturalny-button stan-naturalny-primary">{busy ? 'Analizuję…' : 'Analiza JSON'}</button>
+        {busy && <button type="button" onClick={() => { setInterrupted(true); void stop(); }} className="stan-naturalny-button">Przerwij analizę</button>}
+        {!busy && <button type="button" onClick={() => { setInput(''); setMessages([]); clearError(); setInterrupted(false); }} className="stan-naturalny-button">Wyczyść analizę</button>}
       </div>
     </form>
     {busy && !interrupted && <p role="status" className="mt-4">Przygotowuję i sprawdzam wynik. Niepełna odpowiedź nie jest gotową analizą.</p>}
     {interrupted && <p role="status" className="mt-4">Analiza została przerwana. Nie zapisano wyniku.</p>}
-    {error && <p role="alert" className="nova-error mt-4">{displayChatError(error.message)}</p>}
-    {invalidResult && <p role="alert" className="nova-error mt-4">Odpowiedź jest niepełna lub ma błędny format (wymagane: category, priority, draft i needs_review). Nie pokazano jej jako poprawnej analizy.</p>}
-    {result && <section aria-label="Wynik analizy" aria-live="polite" className="nova-result mt-6">
+    {error && <p role="alert" className="stan-naturalny-error mt-4">{displayChatError(error.message)}</p>}
+    {invalidResult && <p role="alert" className="stan-naturalny-error mt-4">Odpowiedź jest niepełna lub ma błędny format (wymagane: category, priority, draft i needs_review). Nie pokazano jej jako poprawnej analizy.</p>}
+    {result && <section aria-label="Wynik analizy" aria-live="polite" className="stan-naturalny-result mt-6">
       <h2 className="mb-4 text-xl font-bold">Szkic odpowiedzi</h2>
       <dl className="space-y-3">
         <div><dt className="font-bold">Kategoria</dt><dd>{categories[result.category]} ({result.category})</dd></div>
@@ -60,7 +60,7 @@ export default function AnalysisPanel() {
         <div><dt className="font-bold">Szkic</dt><dd className="whitespace-pre-wrap">{result.draft}</dd></div>
         <div><dt className="font-bold">Status sprawdzenia</dt><dd>{result.needs_review ? 'Wymaga sprawdzenia przez pracownika (needs_review: true)' : 'Model nie wskazał potrzeby dodatkowego sprawdzenia (needs_review: false)'}</dd></div>
       </dl>
-      {!result.draft.trim() && <p role="alert" className="nova-error mt-4">Model zwrócił pusty szkic. Nie używaj go jako odpowiedzi dla klienta; ponów analizę lub skonsultuj sprawę z pracownikiem.</p>}
+      {!result.draft.trim() && <p role="alert" className="stan-naturalny-error mt-4">Model zwrócił pusty szkic. Nie używaj go jako odpowiedzi dla klienta; ponów analizę lub skonsultuj sprawę z pracownikiem.</p>}
       <p className="mt-4 font-semibold">To nadal szkic, także gdy needs_review=false. Wiadomość nie została wysłana.</p>
     </section>}
   </section>;
