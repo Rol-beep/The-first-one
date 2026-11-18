@@ -1,3 +1,5 @@
+import { getUserProfile } from "./supabase";
+import { profileInstructions } from "./profile-policy";
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 
 import { z } from 'zod';
@@ -33,10 +35,11 @@ export async function analyze(request: Request, payload: unknown) {
   const receivedAt = new Date().toISOString();
   try {
     await requireStructuredOutputSupport(modelId, request.signal);
+    const profile = await getUserProfile();
     const openrouter = createOpenRouter({ apiKey });
     const result = await generateText({
       model: openrouter(modelId, { structuredOutputs: { strict: true }, provider: { require_parameters: true } }),
-      instructions: stanNaturalnyInstructions + '\nKontekst czasu: żądanie odebrano ' + receivedAt + ' (UTC). Jeśli data lub strefa czasowa spotkania jest niejednoznaczna, nie zakładaj rozpoczęcia w ciągu godziny: ustaw normal i needs_review=true.',
+      instructions: stanNaturalnyInstructions + '\n' + profileInstructions(profile, 'analysis') + '\nKontekst czasu: żądanie odebrano ' + receivedAt + ' (UTC). Jeśli data lub strefa czasowa spotkania jest niejednoznaczna, nie zakładaj rozpoczęcia w ciągu godziny: ustaw normal i needs_review=true.',
       messages: [customerAnalysisMessage(messages[0].parts.filter(part => part.type === 'text').map(part => part.text).join('\n'))],
       output: Output.object({ schema: stanNaturalnyOutputSchema, name: 'stan_naturalny_reply' }),
       maxOutputTokens: 2000,

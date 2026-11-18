@@ -29,6 +29,7 @@ export async function POST(request: Request) {
   }
 
   if (form.get('action') === 'logout') {
+    (await cookies()).set('active_conversation', '', { ...cookieOptions, maxAge: 0 });
     (await cookies()).set(cookieName, '', {
       ...cookieOptions, maxAge: 0,
     });
@@ -68,6 +69,7 @@ export async function POST(request: Request) {
   (await cookies()).set(cookieName, issueSession(), {
     ...cookieOptions, maxAge: lifetime,
   });
+  (await cookies()).set('active_conversation', '', { ...cookieOptions, maxAge: 0 });
 
   return new Response(null, {
     status: 303, headers: { ...headers, Location: openDashboard ? '/dashboard' : '/' },

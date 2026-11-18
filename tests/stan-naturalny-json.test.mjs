@@ -6,6 +6,7 @@ import ts from 'typescript';
 
 // Execute the actual TS modules using the project's installed compiler, no added runner.
 const load = createRequire(import.meta.url);
+load.cache[load.resolve('server-only')] = { exports: {} };
 load.extensions['.ts'] = (module, filename) => {
   const result = ts.transpileModule(readFileSync(filename, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
@@ -269,6 +270,24 @@ test('analysis route: session, input, capability check, structured result; ordin
   const chatPath = path.join(root, 'app/api/agent/route.ts');
   const previousAuth = load.cache[authPath];
   const previousChat = load.cache[chatPath];
+  const storagePath = path.join(root, 'lib/supabase.ts');
+  const headersPath = load.resolve('next/headers');
+  const previousStorage = load.cache[storagePath];
+  const titlePath = path.join(root, 'lib/conversation-title.ts');
+  const previousTitle = load.cache[titlePath];
+  load.cache[titlePath] = { exports: { generateConversationTitle: async () => 'Spokojna rozmowa o konsultacji' } };
+  const previousHeaders = load.cache[headersPath];
+  const savedTurns = [];
+  load.cache[storagePath] = { exports: {
+    getUserProfile: async () => ({ name: null, preferences: {} }),
+    saveUserProfile: async () => {},
+    conversationOwner: () => 'test-owner',
+    prepareConversation: async () => [],
+    saveConversationTurn: async (...args) => savedTurns.push(args),
+    setConversationTitle: async () => {},
+    ConversationStorageError: class extends Error {},
+  } };
+  load.cache[headersPath] = { exports: { cookies: async () => ({ set() {} }) } };
   let authenticated = false;
   let catalogParameters = ['structured_outputs', 'response_format'];
   const calls = [];
@@ -338,13 +357,16 @@ test('analysis route: session, input, capability check, structured result; ordin
     ].map(chunk => 'data: ' + JSON.stringify(chunk) + '\n\n').join('') + 'data: [DONE]\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
   };
   const request = (messages = originalMessages, origin = 'https://test.invalid', extra = {}) => new Request('https://test.invalid/api/agent', {
-    method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: "analyze", messages, ...extra }),
+    method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: "analyze", ...(extra.mode === "chat" ? { id: "00000000-0000-4000-8000-000000000001" } : {}), messages, ...extra }),
   });
   try {
     delete load.cache[chatPath];
+    delete load.cache[path.join(root, "lib/agent-chat.ts")];
+    delete load.cache[path.join(root, "lib/agent-analyze.ts")];
     const { POST } = load('../app/api/agent/route.ts');
     assert.equal((await POST(request())).status, 401);
     assert.equal(calls.length, 0);
+    assert.equal(savedTurns.length, 0);
     authenticated = true;
     assert.equal((await POST(request(undefined, 'https://other.invalid'))).status, 403);
     for (const messages of [[], [{ id: 'u', role: 'user', parts: [{ type: 'text', text: ' ' }] }],
@@ -391,6 +413,10 @@ test('analysis route: session, input, capability check, structured result; ordin
     const chatted = await POST(request(undefined, undefined, { mode: 'chat' }));
     const chattedBody = await chatted.text();
     assert.match(chattedBody, /Zwykła odpowiedź tekstowa/);
+    assert.equal(savedTurns.length, 1);
+    assert.equal(savedTurns[0][2].role, 'user');
+    assert.equal(savedTurns[0][3].role, 'assistant');
+    assert.equal(savedTurns[0][3].parts.filter(p => p.type === 'text').map(p => p.text).join(''), 'Zwykła odpowiedź tekstowa.');
     assert.equal(calls.length, beforeChat + 1, 'chat does not query structured-output capabilities');
     assert.equal(calls.at(-1).body.response_format, undefined);
     assert.equal(calls.at(-1).body.model, 'configured-model');
@@ -415,6 +441,9 @@ test('analysis route: session, input, capability check, structured result; ordin
     globalThis.fetch = originalFetch;
     if (previousAuth) load.cache[authPath] = previousAuth; else delete load.cache[authPath];
     if (previousChat) load.cache[chatPath] = previousChat; else delete load.cache[chatPath];
+    if (previousStorage) load.cache[storagePath] = previousStorage; else delete load.cache[storagePath];
+    if (previousTitle) load.cache[titlePath] = previousTitle; else delete load.cache[titlePath];
+    if (previousHeaders) load.cache[headersPath] = previousHeaders; else delete load.cache[headersPath];
     delete process.env.OPENROUTER_API_KEY;
     delete process.env.OPENROUTER_MODEL;
   }

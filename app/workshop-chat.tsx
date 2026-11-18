@@ -3,10 +3,11 @@
 import { useChat } from "@ai-sdk/react";
 import { convertFileListToFileUIParts, DefaultChatTransport, getToolName, isToolUIPart, type FileUIPart, type SourceUrlUIPart, type UIMessage } from "ai";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { hasPhotoSignature, imagePromptLimit, photoTypes, validPhoto } from "@/lib/chat-image";
 import { displayChatError } from "@/lib/stan-naturalny-output";
 import AnalysisPanel from "./stan-naturalny-analysis";
+import { profileGreeting } from "@/lib/profile-policy";
 import ActionIcon from "./action-icon";
 
 type ChatMessage = UIMessage<{
@@ -191,7 +192,9 @@ function GeneratedImage({ part }: { part: Extract<ChatMessage["parts"][number], 
   );
 }
 
-function PlainChat() {
+type Conversation = { profileName?: string | null; id: string; messages: ChatMessage[] };
+
+function PlainChat({ initial, onBusyChange }: { initial: Conversation; onBusyChange: (busy: boolean) => void }) {
   const [input, setInput] = useState("");
   const [photo, setPhoto] = useState<FileUIPart>();
   const [readingPhoto, setReadingPhoto] = useState(false);
@@ -200,6 +203,8 @@ function PlainChat() {
   const [imageError, setImageError] = useState("");
   const { messages, sendMessage, setMessages, status, error, clearError, stop } = useChat<ChatMessage>({
     transport: chatTransport,
+    id: initial.id,
+    messages: initial.messages,
     onFinish: ({ isAbort, message }) => {
       if (!isAbort) return;
       setMessages((history) => {
@@ -218,6 +223,7 @@ function PlainChat() {
 
   const agentWorking = status === "submitted" || status === "streaming";
   const busy = agentWorking || generating || readingPhoto;
+  useEffect(() => { onBusyChange(busy); }, [busy, onBusyChange]);
 
   async function generate() {
     const prompt = input.trim();
@@ -243,6 +249,16 @@ function PlainChat() {
 
   return (
     <div className="stan-naturalny-chat">
+      <form id="new-conversation" className="hidden" onSubmit={(event) => {
+        event.preventDefault();
+        if (busy) return;
+        setMessages([]);
+        setInput("");
+        setPhoto(undefined);
+        setImageError("");
+        clearError();
+        document.getElementById("message")?.focus();
+      }} />
 
       <section
         aria-label="Rozmowa"
@@ -255,7 +271,7 @@ function PlainChat() {
             <span className="chat-welcome-icon" aria-hidden="true">
               <ActionIcon name="chat" />
             </span>
-            <h2>Co dziś zrobimy?</h2>
+            <h2>{profileGreeting(initial.profileName)}</h2>
             <p>Zadaj pytanie, zaplanuj podróż albo opisz obraz, który chcesz stworzyć.</p>
           </div>
         )}
@@ -408,7 +424,45 @@ function PlainChat() {
 
 export default function Home() {
   const [mode, setMode] = useState<'chat' | 'analysis'>('chat');
+  const [initial, setInitial] = useState<Conversation>();
+  const [memoryError, setMemoryError] = useState("");
+  const [pending, setPending] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function readConversation(method = "GET", signal?: AbortSignal) {
+    const selected = new URLSearchParams(window.location.search).get("conversation");
+    const url = method === "GET" && selected !== null
+      ? `/api/conversations?conversation=${encodeURIComponent(selected)}` : "/api/conversations";
+    const response = await fetch(url, { method, cache: "no-store", signal });
+    if (!response.ok) throw new Error(await response.text());
+    return await response.json() as Conversation;
+  }
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void readConversation("GET", controller.signal).then(setInitial).catch(error => {
+      if (!controller.signal.aborted) setMemoryError(error.message);
+    });
+    return () => controller.abort();
+  }, []);
+
+  async function startNew() {
+    if (pending || busy || !initial) return;
+    setPending(true);
+    setMemoryError("");
+    try {
+      setInitial(await readConversation("POST"));
+      window.history.replaceState(null, "", "/");
+      setMode("chat");
+    } catch (error) {
+      setMemoryError(error instanceof Error ? error.message : "Nie udało się rozpocząć rozmowy.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return <>
+    <div className="chat-navigation">
     <div role="tablist" aria-label="Tryb pracy" className="stan-naturalny-tabs">
       <button id="chat-tab" role="tab" aria-selected={mode === 'chat'} aria-controls="chat-panel" onClick={() => setMode('chat')} className="stan-naturalny-button icon-control" aria-label="Zwykły czat">
         <ActionIcon name="chat" />
@@ -417,7 +471,17 @@ export default function Home() {
         <ActionIcon name="analysis" />
       </button>
     </div>
-    <div id="chat-panel" role="tabpanel" aria-labelledby="chat-tab" hidden={mode !== 'chat'}><PlainChat /></div>
+    <button type="button" disabled={pending || busy || !initial} className="stan-naturalny-button icon-control new-conversation-button"
+      aria-label="Nowa rozmowa" title="Nowa rozmowa" onClick={() => void startNew()}>
+      <ActionIcon name="newChat" />
+    </button>
+    </div>
+    <div id="chat-panel" role="tabpanel" aria-labelledby="chat-tab" hidden={mode !== 'chat'}>{initial ? <PlainChat key={initial.id} initial={initial} onBusyChange={setBusy} />
+      : !memoryError && <p role="status">Wczytuję rozmowę…</p>}
+      {memoryError && <div role="alert" className="stan-naturalny-error p-4">
+        <p>{memoryError}</p>
+        {!initial && <button type="button" className="stan-naturalny-button" onClick={() => window.location.reload()}>Spróbuj ponownie</button>}
+      </div>}</div>
     <div id="analysis-panel" role="tabpanel" aria-labelledby="analysis-tab" hidden={mode !== 'analysis'}><AnalysisPanel /></div>
   </>;
 }

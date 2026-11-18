@@ -9,18 +9,18 @@ import Chat from './workshop-chat';
 import ThemeSwitch from './theme-switch';
 import { authenticated } from '@/lib/workshop';
 
-function BrandHeading() {
+function BrandHeading({ compact = false }: { compact?: boolean }) {
   return (
     <div className="brand-heading">
       <Image
         src="/stan-naturalny-logo.svg"
-        alt=""
+        alt={compact ? "Stan Naturalny" : ""}
         width={500}
         height={150}
         className="brand-logo"
         unoptimized
       />
-      <h1>Asystent Stan Naturalny</h1>
+      <h1>{compact ? "Asystent" : "Asystent Stan Naturalny"}</h1>
     </div>
   );
 }
@@ -74,8 +74,10 @@ async function WorkshopPage({
   return (
     <main className="stan-naturalny-shell">
       <header className="stan-naturalny-header chat-header">
-        <BrandHeading />
+        <BrandHeading compact />
         <div className="stan-naturalny-header-actions">
+          <Link href="/profile" className="stan-naturalny-button" title="Twój profil">Profil</Link>
+          <Link href="/history" className="stan-naturalny-button" title="Historia rozmów">Historia</Link>
           <Link href="/dashboard" className="stan-naturalny-button icon-control" aria-label="Asystent podróży">
             <ActionIcon name="travel" />
           </Link>
