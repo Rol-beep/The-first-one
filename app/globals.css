@@ -687,3 +687,27 @@ button.stan-naturalny-chip { min-height: 2rem; cursor: pointer; }
 .profile-confirm { width: 100%; display: flex; flex-wrap: wrap; gap: .5rem; }
 .profile-confirm p { width: 100%; margin-bottom: .5rem; }
 .profile-panel > button { justify-self: start; }
+
+.knowledge-upload { display: grid; gap: 1.25rem; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); }
+.knowledge-upload label { display: block; margin-bottom: .5rem; font-weight: 600; }
+.knowledge-upload input, .knowledge-upload textarea { width: 100%; }
+.knowledge-upload textarea { resize: vertical; min-height: 18rem; line-height: 1.6; }
+.knowledge-upload p { margin-top: .5rem; font-size: .9rem; }
+.knowledge-upload > button { justify-self: start; }
+.knowledge-success { padding: 1rem; background: var(--tint); border-radius: .75rem; overflow-wrap: anywhere; }
+
+.knowledge-documents { display: grid; gap: 1rem; padding-bottom: 2rem; }
+.knowledge-documents-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.knowledge-documents h2 { font-size: 1.4rem; }
+.knowledge-documents .history-entry { flex-wrap: wrap; }
+
+.knowledge-progress { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; padding-left: 1.25rem; color: var(--muted); }
+.knowledge-progress [aria-current="step"] { color: var(--accent); font-weight: 600; }
+
+.knowledge-answer-sources { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.knowledge-answer-sources ul { display: grid; gap: .75rem; padding: 0; margin-top: .75rem; list-style: none; }
+.knowledge-answer-sources li { padding: 1rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); }
+.knowledge-source-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; margin-bottom: .75rem; overflow-wrap: anywhere; }
+.knowledge-source-heading span { color: var(--muted); font-size: .8rem; }
+.knowledge-answer-sources summary { display: inline-flex; cursor: pointer; }
+.knowledge-source-text { margin-top: .75rem; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }

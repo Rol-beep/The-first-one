@@ -1,4 +1,6 @@
 import "server-only";
+import { embedMany } from "ai";
+import { getEmbeddingModel, knowledgeEmbeddingDimensions } from "./model";
 import { safeProfile, mergeHobbies, type ProfilePatch } from "./profile-policy";
 
 import { createHash } from "node:crypto";
@@ -201,4 +203,88 @@ export async function clearUserProfile() {
   const { error } = await getSupabase().from("user_profiles")
     .update({ name: null, preferences: {} }).eq("singleton", true);
   if (error) throw new ConversationStorageError("Nie udało się wyczyścić profilu.");
+}
+
+export class KnowledgeSaveError extends Error {}
+
+export async function listKnowledgeDocuments() {
+  const db = getSupabase();
+  const documents: import("./knowledge-import").KnowledgeDocument[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const result = await db.from("documents").select("id,title,created_at,chunks(count)")
+      .order("created_at", { ascending: false }).order("id").range(offset, offset + 499);
+    if (result.error) throw new KnowledgeSaveError("Nie udało się wczytać dokumentów. Spróbuj odświeżyć listę.");
+    for (const row of result.data ?? []) documents.push({
+      id: String(row.id), title: row.title, createdAt: row.created_at, chunkCount: row.chunks?.[0]?.count ?? 0,
+    });
+    if (result.data.length < 500) return documents;
+  }
+}
+
+export async function deleteKnowledgeDocument(id: string) {
+  const result = await getSupabase().rpc("delete_knowledge_document", { p_id: id });
+  if (result.error) throw new KnowledgeSaveError("Nie udało się usunąć dokumentu. Odśwież listę i spróbuj ponownie. Sprawdź też, czy uruchomiono skrypt knowledge-import.sql.");
+}
+
+export async function saveKnowledgeDocument(
+  title: string, chunks: string[],
+  expected: import("./knowledge-import").KnowledgeVersion[] = [],
+  progress: (stage: import("./knowledge-import").KnowledgeStage) => void = () => {},
+) {
+  const db = getSupabase();
+  // Do not create a document until all embeddings are ready. The database RPC
+  // commits the entire replacement/backfill or rolls back everything on error.
+  const pendingSchema = z.object({
+    document_id: z.union([z.uuid(), z.number().int().safe().nonnegative(), z.string().regex(/^\d+$/)]),
+    chunk_index: z.number().int().nonnegative(), content: z.string().min(1),
+  });
+  const pending: z.infer<typeof pendingSchema>[] = [];
+  progress("embedding");
+  try {
+    for (let offset = 0; ; offset += 500) {
+      const page = await db.from("chunks").select("document_id,chunk_index,content")
+        .is("embedding", null).order("document_id").order("chunk_index").range(offset, offset + 499);
+      if (page.error) throw page.error;
+      const rows = z.array(pendingSchema).parse(page.data);
+      pending.push(...rows);
+      if (rows.length < 500) break;
+    }
+  } catch {
+    throw new KnowledgeSaveError("Nie udało się odczytać fragmentów do embeddingów. Sprawdź połączenie z Supabase i ponów import. Dotychczasowe dokumenty pozostały bez zmian.");
+  }
+  let vectors: number[][];
+  try {
+    const { embeddings } = await embedMany({
+      model: getEmbeddingModel(), values: [...chunks, ...pending.map(row => row.content)],
+      maxRetries: 0, abortSignal: AbortSignal.timeout(120_000),
+    });
+    vectors = z.array(z.array(z.number().finite()).length(knowledgeEmbeddingDimensions))
+      .length(chunks.length + pending.length).parse(embeddings);
+  } catch {
+    throw new KnowledgeSaveError("Nie udało się utworzyć embeddingów. Sprawdź model i dostępne środki w OpenRouter, a potem ponów import. Nie zapisano niedokończonego dokumentu; stara wersja pozostała bez zmian.");
+  }
+  progress("save");
+  const result = await db.rpc("commit_knowledge_import", {
+    p_title: title,
+    p_chunks: chunks.map((content, index) => ({ content, embedding: vectors[index] })),
+    p_backfill: pending.map((row, index) => ({ documentId: String(row.document_id), chunkIndex: row.chunk_index,
+      content: row.content, embedding: vectors[chunks.length + index] })),
+    p_expected: expected,
+  });
+  if (result.error) {
+    if (result.error.message?.includes("KNOWLEDGE_VERSION_CONFLICT")) {
+      throw new KnowledgeSaveError("Wersja dokumentu zmieniła się w innym oknie. Odśwież listę i ponownie potwierdź zastąpienie.");
+    }
+    throw new KnowledgeSaveError("Nie udało się potwierdzić zapisu. Odśwież listę przed ponowieniem importu. Jeśli problem wraca, sprawdź połączenie z Supabase i wykonanie skryptu knowledge-import.sql.");
+  }
+}
+
+// Called exclusively by the authenticated agent endpoint's server-side tool.
+export async function searchKnowledgeChunks(embedding: number[], signal: AbortSignal) {
+  const vector = z.array(z.number().finite()).length(knowledgeEmbeddingDimensions).parse(embedding);
+  const result = await getSupabase().rpc("match_chunks", { query_embedding: vector, match_count: 3 }).abortSignal(signal);
+  if (result.error) throw new KnowledgeSaveError("Nie udało się przeszukać bazy wiedzy.");
+  return z.array(z.object({
+    title: z.string().trim().min(1), content: z.string().min(1), similarity: z.number().finite(),
+  })).parse(result.data).sort((a, b) => b.similarity - a.similarity).slice(0, 3);
 }

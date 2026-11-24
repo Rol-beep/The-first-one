@@ -76,6 +76,7 @@ async function WorkshopPage({
       <header className="stan-naturalny-header chat-header">
         <BrandHeading compact />
         <div className="stan-naturalny-header-actions">
+          <Link href="/upload" className="stan-naturalny-button">Baza wiedzy</Link>
           <Link href="/profile" className="stan-naturalny-button" title="Twój profil">Profil</Link>
           <Link href="/history" className="stan-naturalny-button" title="Historia rozmów">Historia</Link>
           <Link href="/dashboard" className="stan-naturalny-button icon-control" aria-label="Asystent podróży">

@@ -8,6 +8,7 @@ import { hasPhotoSignature, imagePromptLimit, photoTypes, validPhoto } from "@/l
 import { displayChatError } from "@/lib/stan-naturalny-output";
 import AnalysisPanel from "./stan-naturalny-analysis";
 import { profileGreeting } from "@/lib/profile-policy";
+import { usedKnowledgeSources, displayKnowledgeText } from "@/lib/knowledge-sources";
 import ActionIcon from "./action-icon";
 
 type ChatMessage = UIMessage<{
@@ -104,6 +105,29 @@ function MessageSources({ message }: { message: ChatMessage }) {
   );
 }
 
+function KnowledgeSources({ message }: { message: ChatMessage }) {
+  const text = message.parts.flatMap(part => part.type === "text" ? [part.text] : []).join("\n");
+  const candidates: unknown[] = [];
+  for (const part of message.parts) {
+    if (isToolUIPart(part) && getToolName(part) === "searchKnowledge" && part.state === "output-available"
+      && part.output && typeof part.output === "object" && "fragments" in part.output && Array.isArray(part.output.fragments)) {
+      candidates.push(...part.output.fragments);
+    }
+  }
+  const sources = usedKnowledgeSources(text, candidates);
+  if (!sources.length) return null;
+  return <section className="knowledge-answer-sources" aria-label="Źródła z bazy wiedzy">
+    <p className="font-semibold">Źródła z bazy wiedzy</p>
+    <ul>{sources.map(source => <li key={source.sourceId}>
+      <div className="knowledge-source-heading"><strong>{source.title}</strong>
+        <span>Podobieństwo: {(source.similarity * 100).toLocaleString('pl-PL', { maximumFractionDigits: 1 })}%</span></div>
+      <details><summary className="stan-naturalny-button">Pokaż fragment</summary>
+        <p className="knowledge-source-text">{source.content}</p>
+      </details>
+    </li>)}</ul>
+  </section>;
+}
+
 function MessageTools({ message }: { message: ChatMessage }) {
   let step = 0;
   const usedTools = new Map<number, Set<string>>();
@@ -121,6 +145,7 @@ function MessageTools({ message }: { message: ChatMessage }) {
 
   const labels = new Map([
     ["webSearch", "🔎 wyszukiwanie"],
+    ["searchKnowledge", "📚 baza wiedzy"],
     ["aktualnyCzas", "🕒 aktualnyCzas"],
     ["pogoda", "🌤️ pogoda"],
     ["waluty", "💱 waluty"],
@@ -282,7 +307,7 @@ function PlainChat({ initial, onBusyChange }: { initial: Conversation; onBusyCha
             {message.parts.map((part, index) =>
               part.type === "text" ? (
                 <span key={index} className="whitespace-pre-wrap">
-                  {part.text}
+                  {message.role === "assistant" ? displayKnowledgeText(part.text) : part.text}
                 </span>
               ) : part.type === "file" ? (
                 <Image key={index} src={part.url} alt={part.filename ?? "Zdjęcie"}
@@ -292,6 +317,7 @@ function PlainChat({ initial, onBusyChange }: { initial: Conversation; onBusyCha
                 <GeneratedImage key={part.toolCallId} part={part} />
               ) : null,
             )}
+            {message.role === "assistant" && <KnowledgeSources message={message} />}
             {message.role === "assistant" && <MessageSources message={message} />}
             <AgentNotice message={message} />
             {(message.metadata?.visionModelId !== undefined) && (
